@@ -319,6 +319,7 @@ describe('release-please-action', () => {
           major: 1,
           minor: 2,
           patch: 3,
+          prNumber: 1,
         },
       ]);
       fakeManifest.createPullRequests.resolves([]);
@@ -374,6 +375,7 @@ describe('release-please-action', () => {
           major: 1,
           minor: 0,
           patch: 0,
+          prNumber: 1,
         },
         {
           id: 123,
@@ -389,6 +391,7 @@ describe('release-please-action', () => {
           major: 1,
           minor: 2,
           patch: 0,
+          prNumber: 2,
         },
       ]);
       fakeManifest.createPullRequests.resolves([]);
