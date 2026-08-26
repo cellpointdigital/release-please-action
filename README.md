@@ -1,3 +1,10 @@
+# CELLPOINT FORK
+
+This fork exists so we can use our fork of release please at cellpointdigital/release-please
+
+To update the version, just update `package-lock.json`, change the `resolved` commit to the latest commit
+on the release-please repo. See git log for examples.
+
 # Release Please Action
 
 [![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-yellow.svg)](https://conventionalcommits.org)
