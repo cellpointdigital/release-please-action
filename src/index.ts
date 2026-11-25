@@ -39,9 +39,12 @@ interface ActionInputs {
   targetBranch?: string;
   skipGitHubRelease?: boolean;
   skipGitHubPullRequest?: boolean;
+  skipLabeling?: boolean;
   fork?: boolean;
   includeComponentInTag?: boolean;
   changelogHost: string;
+  versioningStrategy?: string;
+  releaseAs?: string;
 }
 
 function parseInputs(): ActionInputs {
@@ -60,9 +63,12 @@ function parseInputs(): ActionInputs {
     proxyServer: getOptionalInput('proxy-server'),
     skipGitHubRelease: getOptionalBooleanInput('skip-github-release'),
     skipGitHubPullRequest: getOptionalBooleanInput('skip-github-pull-request'),
+    skipLabeling: getOptionalBooleanInput('skip-labeling'),
     fork: getOptionalBooleanInput('fork'),
     includeComponentInTag: getOptionalBooleanInput('include-component-in-tag'),
     changelogHost: core.getInput('changelog-host') || DEFAULT_GITHUB_SERVER_URL,
+    versioningStrategy: getOptionalInput('versioning-strategy'),
+    releaseAs: getOptionalInput('release-as'),
   };
   return inputs;
 }
@@ -92,16 +98,20 @@ function loadOrBuildManifest(
         releaseType: inputs.releaseType,
         includeComponentInTag: inputs.includeComponentInTag,
         changelogHost: inputs.changelogHost,
+        versioning: inputs.versioningStrategy,
+        releaseAs: inputs.releaseAs,
       },
       {
         fork: inputs.fork,
+        skipLabeling: inputs.skipLabeling,
       },
       inputs.path
     );
   }
-  const manifestOverrides = inputs.fork
+  const manifestOverrides = inputs.fork || inputs.skipLabeling
     ? {
         fork: inputs.fork,
+        skipLabeling: inputs.skipLabeling,
       }
     : {};
   core.debug('Loading manifest from config file');
@@ -111,13 +121,22 @@ function loadOrBuildManifest(
     inputs.configFile,
     inputs.manifestFile,
     manifestOverrides
-  );
+  ).then(manifest => {
+    // Override changelogHost for all paths if provided as action input and different from default
+    if (inputs.changelogHost && inputs.changelogHost !== DEFAULT_GITHUB_SERVER_URL) {
+      core.debug(`Overriding changelogHost to: ${inputs.changelogHost}`);
+      for (const path in manifest.repositoryConfig) {
+        manifest.repositoryConfig[path].changelogHost = inputs.changelogHost;
+      }
+    }
+    return manifest;
+  });
 }
 
-export async function main() {
+export async function main(fetchOverride?: any) {
   core.info(`Running release-please version: ${VERSION}, cellpoint fork`);
   const inputs = parseInputs();
-  const github = await getGitHubInstance(inputs);
+  const github = await getGitHubInstance(inputs, fetchOverride);
 
   if (!inputs.skipGitHubRelease) {
     const manifest = await loadOrBuildManifest(github, inputs);
@@ -132,7 +151,7 @@ export async function main() {
   }
 }
 
-function getGitHubInstance(inputs: ActionInputs): Promise<GitHub> {
+function getGitHubInstance(inputs: ActionInputs, fetchOverride?: any): Promise<GitHub> {
   const [owner, repo] = inputs.repoUrl.split('/');
   let proxy: Proxy | undefined = undefined;
   if (inputs.proxyServer) {
@@ -151,6 +170,7 @@ function getGitHubInstance(inputs: ActionInputs): Promise<GitHub> {
     graphqlUrl: inputs.githubGraphqlUrl,
     token: inputs.token,
     defaultBranch: inputs.targetBranch,
+    fetch: fetchOverride,
   };
   return GitHub.create(githubCreateOpts);
 }

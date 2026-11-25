@@ -20,6 +20,7 @@ import * as sinon from 'sinon';
 import * as nock from 'nock';
 import {RestoreFn} from 'mocked-env';
 import mockedEnv from 'mocked-env';
+const fetch = require('node-fetch');
 
 import {Manifest, GitHub} from 'release-please';
 // As defined in action.yml
@@ -106,7 +107,7 @@ describe('release-please-action', () => {
         });
         fakeManifest.createReleases.resolves([]);
         fakeManifest.createPullRequests.resolves([]);
-        await action.main();
+        await action.main(fetch);
         sinon.assert.calledOnce(fakeManifest.createReleases);
         sinon.assert.calledOnce(fakeManifest.createPullRequests);
       });
@@ -116,7 +117,7 @@ describe('release-please-action', () => {
           'release-type': 'simple',
         });
         fakeManifest.createPullRequests.resolves([]);
-        await action.main();
+        await action.main(fetch);
         sinon.assert.notCalled(fakeManifest.createReleases);
         sinon.assert.calledOnce(fakeManifest.createPullRequests);
       });
@@ -126,7 +127,7 @@ describe('release-please-action', () => {
           'release-type': 'simple',
         });
         fakeManifest.createReleases.resolves([]);
-        await action.main();
+        await action.main(fetch);
         sinon.assert.calledOnce(fakeManifest.createReleases);
         sinon.assert.notCalled(fakeManifest.createPullRequests);
       });
@@ -137,7 +138,7 @@ describe('release-please-action', () => {
         });
         fakeManifest.createReleases.resolves([]);
         fakeManifest.createPullRequests.resolves([]);
-        await action.main();
+        await action.main(fetch);
         sinon.assert.calledOnce(fakeManifest.createReleases);
         sinon.assert.calledOnce(fakeManifest.createPullRequests);
 
@@ -157,7 +158,7 @@ describe('release-please-action', () => {
         });
         fakeManifest.createReleases.resolves([]);
         fakeManifest.createPullRequests.resolves([]);
-        await action.main();
+        await action.main(fetch);
         sinon.assert.calledOnce(fakeManifest.createReleases);
         sinon.assert.calledOnce(fakeManifest.createPullRequests);
 
@@ -167,6 +168,53 @@ describe('release-please-action', () => {
           sinon.match.string,
           sinon.match.object,
           sinon.match({fork: true}),
+          sinon.match.any,
+        );
+      });
+      it('allows specifying versioning-strategy', async () => {
+        restoreEnv = mockInputs({
+          'release-type': 'simple',
+          'versioning-strategy': 'default',
+        });
+        fakeManifest.createReleases.resolves([]);
+        fakeManifest.createPullRequests.resolves([]);
+        await action.main(fetch);
+        sinon.assert.calledOnce(fakeManifest.createReleases);
+        sinon.assert.calledOnce(fakeManifest.createPullRequests);
+
+        sinon.assert.calledWith(
+          fromConfigStub,
+          sinon.match.any,
+          sinon.match.string,
+          sinon.match({
+            releaseType: 'simple',
+            versioning: 'default',
+          }),
+          sinon.match.object,
+          sinon.match.any,
+        );
+      });
+
+      it('allows specifying release-as', async () => {
+        restoreEnv = mockInputs({
+          'release-type': 'simple',
+          'release-as': '2.0.0',
+        });
+        fakeManifest.createReleases.resolves([]);
+        fakeManifest.createPullRequests.resolves([]);
+        await action.main(fetch);
+        sinon.assert.calledOnce(fakeManifest.createReleases);
+        sinon.assert.calledOnce(fakeManifest.createPullRequests);
+
+        sinon.assert.calledWith(
+          fromConfigStub,
+          sinon.match.any,
+          sinon.match.string,
+          sinon.match({
+            releaseType: 'simple',
+            releaseAs: '2.0.0',
+          }),
+          sinon.match.object,
           sinon.match.any,
         );
       });
@@ -184,7 +232,7 @@ describe('release-please-action', () => {
         restoreEnv = mockInputs({});
         fakeManifest.createReleases.resolves([]);
         fakeManifest.createPullRequests.resolves([]);
-        await action.main();
+        await action.main(fetch);
         sinon.assert.calledOnce(fakeManifest.createReleases);
         sinon.assert.calledOnce(fakeManifest.createPullRequests);
       });
@@ -193,7 +241,7 @@ describe('release-please-action', () => {
           'skip-github-release': 'true',
         });
         fakeManifest.createPullRequests.resolves([]);
-        await action.main();
+        await action.main(fetch);
         sinon.assert.notCalled(fakeManifest.createReleases);
         sinon.assert.calledOnce(fakeManifest.createPullRequests);
       });
@@ -202,7 +250,7 @@ describe('release-please-action', () => {
           'skip-github-pull-request': 'true',
         });
         fakeManifest.createReleases.resolves([]);
-        await action.main();
+        await action.main(fetch);
         sinon.assert.calledOnce(fakeManifest.createReleases);
         sinon.assert.notCalled(fakeManifest.createPullRequests);
       });
@@ -212,7 +260,7 @@ describe('release-please-action', () => {
         });
         fakeManifest.createReleases.resolves([]);
         fakeManifest.createPullRequests.resolves([]);
-        await action.main();
+        await action.main(fetch);
         sinon.assert.calledOnce(fakeManifest.createReleases);
         sinon.assert.calledOnce(fakeManifest.createPullRequests);
 
@@ -230,7 +278,7 @@ describe('release-please-action', () => {
         });
         fakeManifest.createReleases.resolves([]);
         fakeManifest.createPullRequests.resolves([]);
-        await action.main();
+        await action.main(fetch);
         sinon.assert.calledOnce(fakeManifest.createReleases);
         sinon.assert.calledOnce(fakeManifest.createPullRequests);
 
@@ -242,6 +290,79 @@ describe('release-please-action', () => {
           sinon.match.string,
           sinon.match({fork: true}),
         );
+      });
+      it('allows specifying changelog-host', async () => {
+        restoreEnv = mockInputs({
+          'changelog-host': 'https://ghe.example.com',
+        });
+        fakeManifest.createReleases.resolves([]);
+        fakeManifest.createPullRequests.resolves([]);
+        await action.main(fetch);
+        sinon.assert.calledOnce(fakeManifest.createReleases);
+        sinon.assert.calledOnce(fakeManifest.createPullRequests);
+
+        // Test that fromManifest is called without changelogHost in overrides
+        // This assertion verifies that changelogHost is not passed in the manifestOverrides
+        // because the implementation handles changelogHost by modifying the manifest
+        // after it's created, not by passing it as an override parameter.
+        sinon.assert.calledWith(
+          fromManifestStub,
+          sinon.match.any,
+          sinon.match.string,
+          sinon.match.string,
+          sinon.match.string,
+          sinon.match(arg => !arg.hasOwnProperty('changelogHost')),
+        );
+      });
+      it('modifies repositoryConfig with custom changelog-host', async () => {
+        restoreEnv = mockInputs({
+          'changelog-host': 'https://ghe.example.com',
+        });
+
+        // Create a mock repositoryConfig on the existing fakeManifest
+        const mockRepositoryConfig = {
+          '.': { releaseType: 'node' },
+          'packages/foo': { releaseType: 'node' }
+        };
+        // Use Object.defineProperty to set the readonly property
+        Object.defineProperty(fakeManifest, 'repositoryConfig', {
+          value: mockRepositoryConfig,
+          writable: true,
+          configurable: true
+        });
+        fakeManifest.createReleases.resolves([]);
+        fakeManifest.createPullRequests.resolves([]);
+
+        await action.main(fetch);
+
+        // Verify that changelogHost was added to all paths in repositoryConfig
+        assert.strictEqual(fakeManifest.repositoryConfig['.'].changelogHost, 'https://ghe.example.com');
+        assert.strictEqual(fakeManifest.repositoryConfig['packages/foo'].changelogHost, 'https://ghe.example.com');
+      });
+      it('does not modify repositoryConfig when changelog-host is default', async () => {
+        restoreEnv = mockInputs({
+          'changelog-host': 'https://github.com', // This is the default
+        });
+
+        // Create a mock repositoryConfig on the existing fakeManifest
+        const mockRepositoryConfig = {
+          '.': { releaseType: 'node' },
+          'packages/foo': { releaseType: 'node' }
+        };
+        // Use Object.defineProperty to set the readonly property
+        Object.defineProperty(fakeManifest, 'repositoryConfig', {
+          value: mockRepositoryConfig,
+          writable: true,
+          configurable: true
+        });
+        fakeManifest.createReleases.resolves([]);
+        fakeManifest.createPullRequests.resolves([]);
+
+        await action.main(fetch);
+
+        // Verify that changelogHost was NOT added when using default value
+        assert.strictEqual(fakeManifest.repositoryConfig['.'].changelogHost, undefined);
+        assert.strictEqual(fakeManifest.repositoryConfig['packages/foo'].changelogHost, undefined);
       });
     });
 
@@ -256,7 +377,7 @@ describe('release-please-action', () => {
       const fromManifestStub = sandbox
         .stub(Manifest, 'fromManifest')
         .resolves(fakeManifest);
-      await action.main();
+      await action.main(fetch);
       sinon.assert.calledOnce(fakeManifest.createReleases);
       sinon.assert.calledOnce(fakeManifest.createPullRequests);
 
@@ -281,7 +402,7 @@ describe('release-please-action', () => {
       fakeManifest.createReleases.resolves([]);
       fakeManifest.createPullRequests.resolves([]);
       sandbox.stub(Manifest, 'fromManifest').resolves(fakeManifest);
-      await action.main();
+      await action.main(fetch);
       sinon.assert.calledOnce(fakeManifest.createReleases);
       sinon.assert.calledOnce(fakeManifest.createPullRequests);
 
@@ -319,12 +440,12 @@ describe('release-please-action', () => {
           major: 1,
           minor: 2,
           patch: 3,
-          prNumber: 1,
+          prNumber: 234,
         },
       ]);
       fakeManifest.createPullRequests.resolves([]);
       sandbox.stub(Manifest, 'fromManifest').resolves(fakeManifest);
-      await action.main();
+      await action.main(fetch);
       sinon.assert.calledOnce(fakeManifest.createReleases);
       sinon.assert.calledOnce(fakeManifest.createPullRequests);
 
@@ -340,6 +461,7 @@ describe('release-please-action', () => {
       assert.strictEqual(output.version, '1.2.3');
       assert.strictEqual(output.sha, 'abc123');
       assert.strictEqual(output.paths_released, '["."]');
+      assert.strictEqual(output.body, 'Some release notes');
     });
 
     it('sets appropriate outputs when release PR opened', async () => {
@@ -348,7 +470,7 @@ describe('release-please-action', () => {
       fakeManifest.createReleases.resolves([]);
       fakeManifest.createPullRequests.resolves([fixturePrs[0]]);
       sandbox.stub(Manifest, 'fromManifest').resolves(fakeManifest);
-      await action.main();
+      await action.main(fetch);
       sinon.assert.calledOnce(fakeManifest.createReleases);
       sinon.assert.calledOnce(fakeManifest.createPullRequests);
 
@@ -375,7 +497,7 @@ describe('release-please-action', () => {
           major: 1,
           minor: 0,
           patch: 0,
-          prNumber: 1,
+          prNumber: 234,
         },
         {
           id: 123,
@@ -391,12 +513,12 @@ describe('release-please-action', () => {
           major: 1,
           minor: 2,
           patch: 0,
-          prNumber: 2,
+          prNumber: 235,
         },
       ]);
       fakeManifest.createPullRequests.resolves([]);
       sandbox.stub(Manifest, 'fromManifest').resolves(fakeManifest);
-      await action.main();
+      await action.main(fetch);
       sinon.assert.calledOnce(fakeManifest.createReleases);
 
       assert.strictEqual(output['a--id'], 123456);
@@ -410,6 +532,7 @@ describe('release-please-action', () => {
       assert.strictEqual(output['a--version'], '1.0.0');
       assert.strictEqual(output['a--sha'], 'abc123');
       assert.strictEqual(output['a--path'], 'a');
+      assert.strictEqual(output['a--body'], 'Some release notes');
 
       assert.strictEqual(output['b--id'], 123);
       assert.strictEqual(output['b--release_created'], true);
@@ -422,6 +545,7 @@ describe('release-please-action', () => {
       assert.strictEqual(output['b--version'], '1.2.0');
       assert.strictEqual(output['b--sha'], 'abc123');
       assert.strictEqual(output['b--path'], 'b');
+      assert.strictEqual(output['b--body'], 'Some release notes');
 
       assert.strictEqual(output.paths_released, '["a","b"]');
       assert.strictEqual(output.releases_created, true);
@@ -432,7 +556,7 @@ describe('release-please-action', () => {
       fakeManifest.createReleases.resolves([]);
       fakeManifest.createPullRequests.resolves(fixturePrs);
       sandbox.stub(Manifest, 'fromManifest').resolves(fakeManifest);
-      await action.main();
+      await action.main(fetch);
       sinon.assert.calledOnce(fakeManifest.createReleases);
       sinon.assert.calledOnce(fakeManifest.createPullRequests);
 
@@ -446,7 +570,7 @@ describe('release-please-action', () => {
       fakeManifest.createReleases.resolves([]);
       fakeManifest.createPullRequests.resolves([]);
       sandbox.stub(Manifest, 'fromManifest').resolves(fakeManifest);
-      await action.main();
+      await action.main(fetch);
       sinon.assert.calledOnce(fakeManifest.createReleases);
       sinon.assert.calledOnce(fakeManifest.createPullRequests);
 
